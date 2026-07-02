@@ -195,6 +195,16 @@ function clearForm() {
   document.getElementById('fNotes').value = '';
 }
 
+document.getElementById('fKeywords').addEventListener('input', (e) => {
+  const pos = e.target.selectionStart;
+  const before = e.target.value;
+  const after = before.replace(/，/g, ',');
+  if (before !== after) {
+    e.target.value = after;
+    e.target.setSelectionRange(pos, pos);
+  }
+});
+
 async function loadDataForEdit() {
   const c = getConfig();
   if (!c.user || !c.token) {
@@ -223,7 +233,7 @@ function renderEditList() {
   let list = cachedData;
   if (q) {
     list = cachedData.filter(item => {
-      const haystack = [item.id, item.name, item.category, ...(item.keywords||[])].join(' ').toLowerCase();
+      const haystack = [item.id, item.name, item.category, ...normalizeKeywords(item.keywords)].join(' ').toLowerCase();
       return haystack.includes(q);
     });
   }
@@ -243,6 +253,15 @@ function renderEditList() {
   `).join('');
 }
 
+function normalizeKeywords(raw) {
+  if (!raw) return [];
+  if (!Array.isArray(raw)) raw = [raw];
+  return raw
+    .flatMap(k => String(k).split(/[,，]/))
+    .map(k => k.trim())
+    .filter(Boolean);
+}
+
 function selectEditEntry(id) {
   const item = cachedData.find(d => d.id === id);
   if (!item) return;
@@ -255,7 +274,7 @@ function selectEditEntry(id) {
   document.getElementById('imgHint').textContent = '不选择则保留原图';
   document.getElementById('fName').value = item.name || '';
   document.getElementById('fCategory').value = item.category || '';
-  document.getElementById('fKeywords').value = (item.keywords || []).join(',');
+  document.getElementById('fKeywords').value = normalizeKeywords(item.keywords).join(',');
   document.getElementById('fUsage').value = item.usage || '';
   document.getElementById('fNotes').value = item.notes || '';
   const p = document.getElementById('preview');
