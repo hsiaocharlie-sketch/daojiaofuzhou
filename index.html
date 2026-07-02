@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>道教符咒资料库</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-index.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="符咒查询">
+<meta name="theme-color" content="#8c5a3c">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -75,15 +81,30 @@
 <script>
 let allData = [];
 
+function getKeywords(item) {
+  let raw = item.keywords;
+  if (!raw) return [];
+  if (!Array.isArray(raw)) raw = [raw];
+  return raw
+    .flatMap(k => String(k).split(/[,，]/))
+    .map(k => k.trim())
+    .filter(Boolean);
+}
+
 fetch('data.json?_=' + Date.now())
   .then(r => r.json())
   .then(data => {
     allData = data;
-    render(allData);
+    showHint();
   })
   .catch(e => {
     document.getElementById('grid').innerHTML = '<p>加载数据失败,请检查 data.json</p>';
   });
+
+function showHint() {
+  document.getElementById('count').textContent = `共收录 ${allData.length} 条,输入关键词开始搜索`;
+  document.getElementById('grid').innerHTML = '';
+}
 
 function render(list) {
   document.getElementById('count').textContent = `共 ${list.length} 条`;
@@ -98,11 +119,11 @@ function render(list) {
 
 document.getElementById('searchBox').addEventListener('input', (e) => {
   const q = e.target.value.trim().toLowerCase();
-  if (!q) { render(allData); return; }
+  if (!q) { showHint(); return; }
   const filtered = allData.filter(item => {
     const haystack = [
       item.name, item.category, item.usage, item.notes,
-      ...(item.keywords || [])
+      ...getKeywords(item)
     ].join(' ').toLowerCase();
     return haystack.includes(q);
   });
@@ -116,7 +137,7 @@ function openModal(idx) {
     <h2>${item.name}</h2>
     ${item.category ? `<div class="label">分类</div><div class="val">${item.category}</div>` : ''}
     <div class="label">关键词</div>
-    <div class="val">${(item.keywords||[]).map(k => `<span class="kw">${k}</span>`).join('')}</div>
+    <div class="val">${getKeywords(item).map(k => `<span class="kw">${k}</span>`).join('')}</div>
     ${item.usage ? `<div class="label">用法</div><div class="val">${item.usage}</div>` : ''}
     ${item.notes ? `<div class="label">备注</div><div class="val">${item.notes}</div>` : ''}
     <div class="label">编号</div><div class="val">${item.id}</div>

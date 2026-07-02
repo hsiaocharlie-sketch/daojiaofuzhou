@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>符咒录入</title>
+<link rel="manifest" href="manifest-upload.json">
+<link rel="apple-touch-icon" href="icon-upload.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="符咒录入">
+<meta name="theme-color" content="#8c5a3c">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -230,14 +236,15 @@ async function loadDataForEdit() {
 function renderEditList() {
   if (!cachedData) return;
   const q = document.getElementById('editSearchBox').value.trim().toLowerCase();
-  let list = cachedData;
-  if (q) {
-    list = cachedData.filter(item => {
-      const haystack = [item.id, item.name, item.category, ...normalizeKeywords(item.keywords)].join(' ').toLowerCase();
-      return haystack.includes(q);
-    });
-  }
   const container = document.getElementById('editList');
+  if (!q) {
+    container.innerHTML = `<p class="hint">共 ${cachedData.length} 条,输入关键词搜索要编辑的符咒</p>`;
+    return;
+  }
+  const list = cachedData.filter(item => {
+    const haystack = [item.id, item.name, item.category, ...normalizeKeywords(item.keywords)].join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
   if (list.length === 0) {
     container.innerHTML = '<p class="hint">没有找到匹配的符咒</p>';
     return;
