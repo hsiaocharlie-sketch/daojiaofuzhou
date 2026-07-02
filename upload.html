@@ -136,7 +136,7 @@
     <textarea id="fUsage" placeholder="使用方法、贴挂位置、配合仪轨等"></textarea>
 
     <label>备注(可选)</label>
-    <textarea id="fNotes" placeholder="出处、流派、来源等"></textarea>
+    <textarea id="fNotes" placeholder="出处、流派、来源等">辰州符咒大全</textarea>
 
     <button id="submitBtn" onclick="submitEntry()">提交上传</button>
     <button type="button" id="cancelEditBtn" style="display:none; background:#999; margin-top:8px;" onclick="switchMode('add')">取消编辑</button>
@@ -198,7 +198,7 @@ function clearForm() {
   document.getElementById('fCategory').value = '';
   document.getElementById('fKeywords').value = '';
   document.getElementById('fUsage').value = '';
-  document.getElementById('fNotes').value = '';
+  document.getElementById('fNotes').value = '辰州符咒大全';
 }
 
 document.getElementById('fKeywords').addEventListener('input', (e) => {
