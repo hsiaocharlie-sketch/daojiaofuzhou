@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>符咒录入</title>
+<link rel="manifest" href="manifest-upload.json">
+<link rel="apple-touch-icon" href="icon-upload.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="符咒录入">
+<meta name="theme-color" content="#8c5a3c">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f4f1ea;
+    margin: 0;
+    padding: 16px;
+    color: #2b2b2b;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; color: #5c3d2e; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+  input[type=text], textarea, input[type=password] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  input[type=file] { width: 100%; padding: 10px 0; }
+  .hint { font-size: 12px; color: #999; margin-top: 4px; }
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #8c5a3c;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  button:disabled { background: #ccc; }
+  #status {
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: none;
+    white-space: pre-wrap;
+  }
+  .ok { background: #e3f2e1; color: #2d6a2d; display: block !important; }
+  .err { background: #fce4e4; color: #a33; display: block !important; }
+  .info { background: #eef; color: #446; display: block !important; }
+  #preview { max-width: 100%; max-height: 260px; margin-top: 10px; border-radius: 8px; display: none; }
+  .config-toggle { font-size: 13px; color: #8c5a3c; text-align: right; margin-bottom: 8px; }
+  .modeTabs { display: flex; gap: 8px; margin-bottom: 4px; }
+  .tabBtn {
+    flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd;
+    background: #f4f1ea; color: #666; font-size: 14px; font-weight: 600; margin-top: 0;
+  }
+  .tabBtn.active { background: #8c5a3c; color: #fff; border-color: #8c5a3c; }
+  #editList { margin-top: 10px; max-height: 260px; overflow-y: auto; }
+  .editItem {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 6px;
+  }
+  .editItem img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; background: #eee; }
+  .editItem .ei-name { font-size: 14px; font-weight: 600; }
+  .editItem .ei-id { font-size: 12px; color: #999; }
+  #editingBanner {
+    background: #eef; color: #446; padding: 8px 10px; border-radius: 8px;
+    font-size: 13px; margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>符咒录入</h1>
+<div class="sub">上传图片,自动编号,自动同步到GitHub</div>
+
+<div class="config-toggle" onclick="document.getElementById('configCard').style.display='block'; this.style.display='none';">⚙️ 首次使用请先设置</div>
+
+<div class="card" id="configCard" style="display:none;">
+  <label>GitHub 用户名</label>
+  <input type="text" id="ghUser" placeholder="例如 zhangsan">
+  <label>仓库名</label>
+  <input type="text" id="ghRepo" value="daojiaofuzhou">
+  <label>Personal Access Token</label>
+  <input type="password" id="ghToken" placeholder="ghp_xxxxxxxx">
+  <div class="hint">这些信息只保存在你手机本地浏览器,不会上传到别处</div>
+  <button onclick="saveConfig()">保存设置</button>
+</div>
+
+<div class="card">
+  <div class="modeTabs">
+    <button type="button" class="tabBtn active" id="tabAdd" onclick="switchMode('add')">➕ 新增符咒</button>
+    <button type="button" class="tabBtn" id="tabEdit" onclick="switchMode('edit')">✏️ 编辑已有</button>
+  </div>
+
+  <div id="editSearchArea" style="display:none;">
+    <label>搜索要编辑的符咒(名称/关键词/编号)</label>
+    <input type="text" id="editSearchBox" placeholder="输入关键词搜索..." oninput="renderEditList()">
+    <div id="editList"></div>
+  </div>
+
+  <div id="formArea" style="display:none;">
+    <div id="editingBanner" style="display:none;"></div>
+
+    <label id="imgLabel">符咒图片</label>
+    <input type="file" accept="image/*" id="imgFile" onchange="previewImg()">
+    <div class="hint" id="imgHint"></div>
+    <img id="preview">
+
+    <label>名称</label>
+    <input type="text" id="fName" placeholder="例如 镇宅符">
+
+    <label>大类(可选)</label>
+    <input type="text" id="fCategory" placeholder="例如 镇宅">
+
+    <label>关键词(用逗号分隔)</label>
+    <input type="text" id="fKeywords" placeholder="例如 镇宅,安宅,辟邪,平安">
+
+    <label>用法</label>
+    <textarea id="fUsage" placeholder="使用方法、贴挂位置、配合仪轨等"></textarea>
+
+    <label>备注(可选)</label>
+    <textarea id="fNotes" placeholder="出处、流派、来源等"></textarea>
+
+    <button id="submitBtn" onclick="submitEntry()">提交上传</button>
+    <button type="button" id="cancelEditBtn" style="display:none; background:#999; margin-top:8px;" onclick="switchMode('add')">取消编辑</button>
+  </div>
+
+  <div id="status"></div>
+</div>
+
+<script>
+function getConfig() {
+  return {
+    user: localStorage.getItem('gh_user') || '',
+    repo: localStorage.getItem('gh_repo') || 'daojiaofuzhou',
+    token: localStorage.getItem('gh_token') || ''
+  };
+}
+let mode = 'add';
+let editingEntry = null;
+let cachedData = null;
+let cachedSha = null;
+
+window.onload = () => {
+  const c = getConfig();
+  document.getElementById('ghUser').value = c.user;
+  document.getElementById('ghRepo').value = c.repo;
+  document.getElementById('ghToken').value = c.token;
+  if (!c.user || !c.token) {
+    document.getElementById('configCard').style.display = 'block';
+    document.querySelector('.config-toggle').style.display = 'none';
+  }
+  switchMode('add');
+};
+
+function switchMode(m) {
+  mode = m;
+  editingEntry = null;
+  document.getElementById('tabAdd').classList.toggle('active', m === 'add');
+  document.getElementById('tabEdit').classList.toggle('active', m === 'edit');
+  document.getElementById('editSearchArea').style.display = m === 'edit' ? 'block' : 'none';
+  document.getElementById('formArea').style.display = m === 'add' ? 'block' : 'none';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.getElementById('editingBanner').style.display = 'none';
+  document.getElementById('imgLabel').textContent = '符咒图片';
+  document.getElementById('imgHint').textContent = '';
+  clearForm();
+  document.getElementById('status').className = '';
+  document.getElementById('status').style.display = 'none';
+  if (m === 'edit') {
+    document.getElementById('editSearchBox').value = '';
+    document.getElementById('editList').innerHTML = '';
+    loadDataForEdit();
+  }
+}
+
+function clearForm() {
+  document.getElementById('imgFile').value = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('fName').value = '';
+  document.getElementById('fCategory').value = '';
+  document.getElementById('fKeywords').value = '';
+  document.getElementById('fUsage').value = '';
+  document.getElementById('fNotes').value = '';
+}
+
+document.getElementById('fKeywords').addEventListener('input', (e) => {
+  const pos = e.target.selectionStart;
+  const before = e.target.value;
+  const after = before.replace(/，/g, ',');
+  if (before !== after) {
+    e.target.value = after;
+    e.target.setSelectionRange(pos, pos);
+  }
+});
+
+async function loadDataForEdit() {
+  const c = getConfig();
+  if (!c.user || !c.token) {
+    showStatus('请先完成设置(点击右上角⚙️)', 'err');
+    return;
+  }
+  try {
+    const res = await ghApi('data.json');
+    if (res.status === 200) {
+      const body = await res.json();
+      cachedSha = body.sha;
+      cachedData = JSON.parse(decodeURIComponent(escape(atob(body.content))));
+      renderEditList();
+    } else {
+      cachedData = [];
+      document.getElementById('editList').innerHTML = '<p class="hint">还没有任何记录</p>';
+    }
+  } catch (e) {
+    showStatus('加载数据失败: ' + e.message, 'err');
+  }
+}
+
+function renderEditList() {
+  if (!cachedData) return;
+  const q = document.getElementById('editSearchBox').value.trim().toLowerCase();
+  const container = document.getElementById('editList');
+  if (!q) {
+    container.innerHTML = `<p class="hint">共 ${cachedData.length} 条,输入关键词搜索要编辑的符咒</p>`;
+    return;
+  }
+  const list = cachedData.filter(item => {
+    const haystack = [item.id, item.name, item.category, ...normalizeKeywords(item.keywords)].join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
+  if (list.length === 0) {
+    container.innerHTML = '<p class="hint">没有找到匹配的符咒</p>';
+    return;
+  }
+  container.innerHTML = list.map(item => `
+    <div class="editItem" onclick="selectEditEntry('${item.id}')">
+      <img src="${item.image}">
+      <div>
+        <div class="ei-name">${item.name}</div>
+        <div class="ei-id">编号 ${item.id}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function normalizeKeywords(raw) {
+  if (!raw) return [];
+  if (!Array.isArray(raw)) raw = [raw];
+  return raw
+    .flatMap(k => String(k).split(/[,，]/))
+    .map(k => k.trim())
+    .filter(Boolean);
+}
+
+function selectEditEntry(id) {
+  const item = cachedData.find(d => d.id === id);
+  if (!item) return;
+  editingEntry = item;
+  document.getElementById('formArea').style.display = 'block';
+  document.getElementById('editingBanner').style.display = 'block';
+  document.getElementById('editingBanner').textContent = `正在编辑:编号 ${item.id}「${item.name}」`;
+  document.getElementById('cancelEditBtn').style.display = 'block';
+  document.getElementById('imgLabel').textContent = '替换图片(可选)';
+  document.getElementById('imgHint').textContent = '不选择则保留原图';
+  document.getElementById('fName').value = item.name || '';
+  document.getElementById('fCategory').value = item.category || '';
+  document.getElementById('fKeywords').value = normalizeKeywords(item.keywords).join(',');
+  document.getElementById('fUsage').value = item.usage || '';
+  document.getElementById('fNotes').value = item.notes || '';
+  const p = document.getElementById('preview');
+  p.src = item.image;
+  p.style.display = 'block';
+}
+function saveConfig() {
+  localStorage.setItem('gh_user', document.getElementById('ghUser').value.trim());
+  localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim());
+  localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
+  showStatus('设置已保存', 'ok');
+  document.getElementById('configCard').style.display = 'none';
+  document.querySelector('.config-toggle').style.display = 'block';
+}
+function previewImg() {
+  const f = document.getElementById('imgFile').files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  const p = document.getElementById('preview');
+  p.src = url;
+  p.style.display = 'block';
+}
+function showStatus(msg, cls) {
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  s.className = cls;
+}
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+async function ghApi(path, options = {}) {
+  const c = getConfig();
+  const res = await fetch(`https://api.github.com/repos/${c.user}/${c.repo}/contents/${path}`, {
+    ...options,
+    headers: {
+      'Authorization': `token ${c.token}`,
+      'Accept': 'application/vnd.github+json',
+      ...(options.headers || {})
+    }
+  });
+  return res;
+}
+async function submitEntry() {
+  const c = getConfig();
+  if (!c.user || !c.token) {
+    showStatus('请先完成设置(点击右上角⚙️)', 'err');
+    return;
+  }
+  const file = document.getElementById('imgFile').files[0];
+  const name = document.getElementById('fName').value.trim();
+
+  if (!name) {
+    showStatus('请填写名称', 'err');
+    return;
+  }
+  if (mode === 'add' && !file) {
+    showStatus('⚠️ 你还没有选择图片!新增符咒必须上传一张图片。', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  showStatus('正在读取现有数据...', 'info');
+
+  try {
+    // 1. 获取现有 data.json(始终重新拉取最新的,避免sha冲突)
+    let dataRes = await ghApi('data.json');
+    let dataJson = [];
+    let sha = null;
+    if (dataRes.status === 200) {
+      const body = await dataRes.json();
+      sha = body.sha;
+      dataJson = JSON.parse(decodeURIComponent(escape(atob(body.content))));
+    } else if (dataRes.status !== 404) {
+      throw new Error('读取data.json失败: ' + dataRes.status);
+    }
+
+    const fields = {
+      name: name,
+      category: document.getElementById('fCategory').value.trim(),
+      keywords: document.getElementById('fKeywords').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
+      usage: document.getElementById('fUsage').value.trim(),
+      notes: document.getElementById('fNotes').value.trim(),
+    };
+
+    let targetId, imagePath, commitMsg;
+
+    if (mode === 'edit' && editingEntry) {
+      // 编辑模式
+      targetId = editingEntry.id;
+      imagePath = editingEntry.image;
+      if (file) {
+        showStatus('正在上传新图片...', 'info');
+        const ext = file.name.split('.').pop().toLowerCase();
+        const newImgFilename = `${targetId}.${ext}`;
+        const newImagePath = `images/${newImgFilename}`;
+        const imgBase64 = await fileToBase64(file);
+        // 如果文件名(含后缀)和原来一样,需要带上原文件的sha才能覆盖
+        let imgSha = null;
+        if (newImagePath === editingEntry.image) {
+          const existRes = await ghApi(imagePath);
+          if (existRes.status === 200) imgSha = (await existRes.json()).sha;
+        }
+        const imgPutBody = { message: `update image for ${targetId}`, content: imgBase64 };
+        if (imgSha) imgPutBody.sha = imgSha;
+        const imgPutRes = await ghApi(newImagePath, { method: 'PUT', body: JSON.stringify(imgPutBody) });
+        if (!imgPutRes.ok) throw new Error('图片上传失败: ' + (await imgPutRes.text()));
+        imagePath = newImagePath;
+      }
+      commitMsg = `edit entry ${targetId} ${name}`;
+      const idx = dataJson.findIndex(d => d.id === targetId);
+      const updatedEntry = { id: targetId, ...fields, image: imagePath };
+      if (idx >= 0) dataJson[idx] = updatedEntry;
+      else dataJson.push(updatedEntry);
+    } else {
+      // 新增模式
+      const maxId = dataJson.reduce((m, item) => Math.max(m, parseInt(item.id) || 0), 0);
+      targetId = String(maxId + 1).padStart(4, '0');
+      const ext = file.name.split('.').pop().toLowerCase();
+      const imgFilename = `${targetId}.${ext}`;
+      imagePath = `images/${imgFilename}`;
+
+      showStatus('正在上传图片...', 'info');
+      const imgBase64 = await fileToBase64(file);
+      const imgPutRes = await ghApi(imagePath, {
+        method: 'PUT',
+        body: JSON.stringify({ message: `add image ${imgFilename}`, content: imgBase64 })
+      });
+      if (!imgPutRes.ok) throw new Error('图片上传失败: ' + (await imgPutRes.text()));
+
+      commitMsg = `add entry ${targetId} ${name}`;
+      dataJson.push({ id: targetId, ...fields, image: imagePath });
+    }
+
+    // 更新 data.json
+    showStatus('正在更新数据...', 'info');
+    const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(dataJson, null, 2))));
+    const putBody = { message: commitMsg, content: newContent };
+    if (sha) putBody.sha = sha;
+    const dataPutRes = await ghApi('data.json', { method: 'PUT', body: JSON.stringify(putBody) });
+    if (!dataPutRes.ok) throw new Error('data.json更新失败: ' + (await dataPutRes.text()));
+
+    if (mode === 'edit') {
+      showStatus(`已保存修改:编号 ${targetId} 「${name}」`, 'ok');
+      switchMode('edit');
+    } else {
+      showStatus(`成功!编号 ${targetId} 「${name}」已上传`, 'ok');
+      clearForm();
+    }
+  } catch (e) {
+    showStatus('出错了: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
