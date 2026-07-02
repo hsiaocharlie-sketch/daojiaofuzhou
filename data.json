@@ -124,5 +124,17 @@
     "usage": "如图",
     "notes": "辰州符咒大全",
     "image": "images/0010.jpeg"
+  },
+  {
+    "id": "0011",
+    "name": "镇兄弟失和",
+    "category": "镇",
+    "keywords": [
+      "兄弟失和",
+      "口角"
+    ],
+    "usage": "如图",
+    "notes": "辰州符咒大全",
+    "image": "images/0011.jpeg"
   }
 ]
