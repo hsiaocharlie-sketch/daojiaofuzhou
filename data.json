@@ -581,5 +581,16 @@
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0048.jpeg"
+  },
+  {
+    "id": "0049",
+    "name": "太极镇邪",
+    "category": "镇压",
+    "keywords": [
+      "邪祟"
+    ],
+    "usage": "",
+    "notes": "辰州符咒大全",
+    "image": "images/0049.jpeg"
   }
 ]
