@@ -6,7 +6,6 @@
   "background_color": "#f4f1ea",
   "theme_color": "#8c5a3c",
   "icons": [
-    { "src": "icon-upload-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-upload-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "icon-upload.png", "sizes": "192x192 512x512", "type": "image/png" }
   ]
 }
