@@ -35,5 +35,18 @@
     "usage": "如图",
     "notes": "辰州符咒大全",
     "image": "images/0003.jpeg"
+  },
+  {
+    "id": "0004",
+    "name": "镇宅",
+    "category": "镇宅",
+    "keywords": [
+      "镇宅",
+      "凶宅",
+      "鬼怪"
+    ],
+    "usage": "如图",
+    "notes": "辰州符咒大全",
+    "image": "images/0004.jpeg"
   }
 ]
