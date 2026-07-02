@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>符咒录入</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f4f1ea;
+    margin: 0;
+    padding: 16px;
+    color: #2b2b2b;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; color: #5c3d2e; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+  input[type=text], textarea, input[type=password] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  input[type=file] { width: 100%; padding: 10px 0; }
+  .hint { font-size: 12px; color: #999; margin-top: 4px; }
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #8c5a3c;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  button:disabled { background: #ccc; }
+  #status {
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: none;
+    white-space: pre-wrap;
+  }
+  .ok { background: #e3f2e1; color: #2d6a2d; display: block !important; }
+  .err { background: #fce4e4; color: #a33; display: block !important; }
+  .info { background: #eef; color: #446; display: block !important; }
+  #preview { max-width: 100%; max-height: 260px; margin-top: 10px; border-radius: 8px; display: none; }
+  .config-toggle { font-size: 13px; color: #8c5a3c; text-align: right; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<h1>符咒录入</h1>
+<div class="sub">上传图片,自动编号,自动同步到GitHub</div>
+
+<div class="config-toggle" onclick="document.getElementById('configCard').style.display='block'; this.style.display='none';">⚙️ 首次使用请先设置</div>
+
+<div class="card" id="configCard" style="display:none;">
+  <label>GitHub 用户名</label>
+  <input type="text" id="ghUser" placeholder="例如 zhangsan">
+  <label>仓库名</label>
+  <input type="text" id="ghRepo" value="daojiaofuzhou">
+  <label>Personal Access Token</label>
+  <input type="password" id="ghToken" placeholder="ghp_xxxxxxxx">
+  <div class="hint">这些信息只保存在你手机本地浏览器,不会上传到别处</div>
+  <button onclick="saveConfig()">保存设置</button>
+</div>
+
+<div class="card">
+  <label>符咒图片</label>
+  <input type="file" accept="image/*" id="imgFile" onchange="previewImg()">
+  <img id="preview">
+
+  <label>名称</label>
+  <input type="text" id="fName" placeholder="例如 镇宅符">
+
+  <label>大类(可选)</label>
+  <input type="text" id="fCategory" placeholder="例如 镇宅">
+
+  <label>关键词(用逗号分隔)</label>
+  <input type="text" id="fKeywords" placeholder="例如 镇宅,安宅,辟邪,平安">
+
+  <label>用法</label>
+  <textarea id="fUsage" placeholder="使用方法、贴挂位置、配合仪轨等"></textarea>
+
+  <label>备注(可选)</label>
+  <textarea id="fNotes" placeholder="出处、流派、来源等"></textarea>
+
+  <button id="submitBtn" onclick="submitEntry()">提交上传</button>
+  <div id="status"></div>
+</div>
+
+<script>
+function getConfig() {
+  return {
+    user: localStorage.getItem('gh_user') || '',
+    repo: localStorage.getItem('gh_repo') || 'daojiaofuzhou',
+    token: localStorage.getItem('gh_token') || ''
+  };
+}
+window.onload = () => {
+  const c = getConfig();
+  document.getElementById('ghUser').value = c.user;
+  document.getElementById('ghRepo').value = c.repo;
+  document.getElementById('ghToken').value = c.token;
+  if (!c.user || !c.token) {
+    document.getElementById('configCard').style.display = 'block';
+    document.querySelector('.config-toggle').style.display = 'none';
+  }
+};
+function saveConfig() {
+  localStorage.setItem('gh_user', document.getElementById('ghUser').value.trim());
+  localStorage.setItem('gh_repo', document.getElementById('ghRepo').value.trim());
+  localStorage.setItem('gh_token', document.getElementById('ghToken').value.trim());
+  showStatus('设置已保存', 'ok');
+  document.getElementById('configCard').style.display = 'none';
+  document.querySelector('.config-toggle').style.display = 'block';
+}
+function previewImg() {
+  const f = document.getElementById('imgFile').files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  const p = document.getElementById('preview');
+  p.src = url;
+  p.style.display = 'block';
+}
+function showStatus(msg, cls) {
+  const s = document.getElementById('status');
+  s.textContent = msg;
+  s.className = cls;
+}
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+async function ghApi(path, options = {}) {
+  const c = getConfig();
+  const res = await fetch(`https://api.github.com/repos/${c.user}/${c.repo}/contents/${path}`, {
+    ...options,
+    headers: {
+      'Authorization': `token ${c.token}`,
+      'Accept': 'application/vnd.github+json',
+      ...(options.headers || {})
+    }
+  });
+  return res;
+}
+async function submitEntry() {
+  const c = getConfig();
+  if (!c.user || !c.token) {
+    showStatus('请先完成设置(点击右上角⚙️)', 'err');
+    return;
+  }
+  const file = document.getElementById('imgFile').files[0];
+  const name = document.getElementById('fName').value.trim();
+  if (!file || !name) {
+    showStatus('请至少选择图片并填写名称', 'err');
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  showStatus('正在读取现有数据...', 'info');
+
+  try {
+    // 1. 获取现有 data.json
+    let dataRes = await ghApi('data.json');
+    let dataJson = [];
+    let sha = null;
+    if (dataRes.status === 200) {
+      const body = await dataRes.json();
+      sha = body.sha;
+      dataJson = JSON.parse(decodeURIComponent(escape(atob(body.content))));
+    } else if (dataRes.status !== 404) {
+      throw new Error('读取data.json失败: ' + dataRes.status);
+    }
+
+    // 2. 计算新编号
+    const maxId = dataJson.reduce((m, item) => Math.max(m, parseInt(item.id) || 0), 0);
+    const newId = String(maxId + 1).padStart(4, '0');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const imgFilename = `${newId}.${ext}`;
+
+    // 3. 上传图片
+    showStatus('正在上传图片...', 'info');
+    const imgBase64 = await fileToBase64(file);
+    const imgPutRes = await ghApi(`images/${imgFilename}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: `add image ${imgFilename}`,
+        content: imgBase64
+      })
+    });
+    if (!imgPutRes.ok) throw new Error('图片上传失败: ' + (await imgPutRes.text()));
+
+    // 4. 更新 data.json
+    showStatus('正在更新数据...', 'info');
+    const newEntry = {
+      id: newId,
+      name: name,
+      category: document.getElementById('fCategory').value.trim(),
+      keywords: document.getElementById('fKeywords').value.split(',').map(s => s.trim()).filter(Boolean),
+      usage: document.getElementById('fUsage').value.trim(),
+      notes: document.getElementById('fNotes').value.trim(),
+      image: `images/${imgFilename}`
+    };
+    dataJson.push(newEntry);
+    const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(dataJson, null, 2))));
+    const putBody = {
+      message: `add entry ${newId} ${name}`,
+      content: newContent
+    };
+    if (sha) putBody.sha = sha;
+    const dataPutRes = await ghApi('data.json', {
+      method: 'PUT',
+      body: JSON.stringify(putBody)
+    });
+    if (!dataPutRes.ok) throw new Error('data.json更新失败: ' + (await dataPutRes.text()));
+
+    showStatus(`成功!编号 ${newId} 「${name}」已上传`, 'ok');
+    // 清空表单
+    document.getElementById('imgFile').value = '';
+    document.getElementById('preview').style.display = 'none';
+    document.getElementById('fName').value = '';
+    document.getElementById('fCategory').value = '';
+    document.getElementById('fKeywords').value = '';
+    document.getElementById('fUsage').value = '';
+    document.getElementById('fNotes').value = '';
+  } catch (e) {
+    showStatus('出错了: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
