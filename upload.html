@@ -341,7 +341,7 @@ async function submitEntry() {
     const fields = {
       name: name,
       category: document.getElementById('fCategory').value.trim(),
-      keywords: document.getElementById('fKeywords').value.split(',').map(s => s.trim()).filter(Boolean),
+      keywords: document.getElementById('fKeywords').value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
       usage: document.getElementById('fUsage').value.trim(),
       notes: document.getElementById('fNotes').value.trim(),
     };
