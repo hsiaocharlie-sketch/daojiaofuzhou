@@ -67,7 +67,7 @@
 <body>
 
 <h1>道教符咒资料库</h1>
-<input type="text" id="searchBox" placeholder="输入关键词搜索,如:镇宅、辟邪...">
+<input type="text" id="searchBox" placeholder="输入关键词搜索,多个词用空格隔开,如:镇宅 辟邪">
 <div id="count"></div>
 <div class="grid" id="grid"></div>
 
@@ -120,12 +120,13 @@ function render(list) {
 document.getElementById('searchBox').addEventListener('input', (e) => {
   const q = e.target.value.trim().toLowerCase();
   if (!q) { showHint(); return; }
+  const terms = q.split(/\s+/).filter(Boolean);
   const filtered = allData.filter(item => {
     const haystack = [
       item.name, item.category, item.usage, item.notes,
       ...getKeywords(item)
     ].join(' ').toLowerCase();
-    return haystack.includes(q);
+    return terms.every(t => haystack.includes(t));
   });
   render(filtered);
 });
