@@ -437,7 +437,9 @@ async function submitEntry() {
       clearForm();
     }
   } catch (e) {
-    showStatus('出错了: ' + e.message, 'err');
+    const c2 = getConfig();
+    const cfgInfo = `(当前配置: 用户名="${c2.user}" 仓库="${c2.repo}" token${c2.token ? '已设置' : '未设置'})`;
+    showStatus('出错了: ' + e.message + '\n' + cfgInfo, 'err');
   } finally {
     btn.disabled = false;
   }
