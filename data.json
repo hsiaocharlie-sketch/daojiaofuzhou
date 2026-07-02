@@ -136,5 +136,17 @@
     "usage": "如图",
     "notes": "辰州符咒大全",
     "image": "images/0011.jpeg"
+  },
+  {
+    "id": "0012",
+    "name": "镇宅",
+    "category": "镇宅",
+    "keywords": [
+      "镇宅",
+      "分房"
+    ],
+    "usage": "如图",
+    "notes": "辰州符咒大全",
+    "image": "images/0012.jpeg"
   }
 ]
