@@ -1226,5 +1226,17 @@
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0101.jpeg"
+  },
+  {
+    "id": "0102",
+    "name": "净坛",
+    "category": "请召",
+    "keywords": [
+      "法坛",
+      "开坛"
+    ],
+    "usage": "",
+    "notes": "辰州符咒大全",
+    "image": "images/0102.jpeg"
   }
 ]
