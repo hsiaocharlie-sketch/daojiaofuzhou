@@ -1214,5 +1214,17 @@
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0100.jpeg"
+  },
+  {
+    "id": "0101",
+    "name": "护身",
+    "category": "请召",
+    "keywords": [
+      "护身",
+      "登法坛"
+    ],
+    "usage": "",
+    "notes": "辰州符咒大全",
+    "image": "images/0101.jpeg"
   }
 ]
