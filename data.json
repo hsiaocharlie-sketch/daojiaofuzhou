@@ -1496,5 +1496,16 @@
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0125.jpeg"
+  },
+  {
+    "id": "0126",
+    "name": "请八仙",
+    "category": "请召",
+    "keywords": [
+      "八仙"
+    ],
+    "usage": "",
+    "notes": "辰州符咒大全",
+    "image": "images/0126.jpeg"
   }
 ]
