@@ -1566,5 +1566,17 @@
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0131.jpeg"
+  },
+  {
+    "id": "0132",
+    "name": "催神",
+    "category": "请召",
+    "keywords": [
+      "诸神",
+      "降坛"
+    ],
+    "usage": "",
+    "notes": "辰州符咒大全",
+    "image": "images/0132.jpeg"
   }
 ]
