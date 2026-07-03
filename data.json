@@ -1757,5 +1757,16 @@
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0146.jpeg"
+  },
+  {
+    "id": "0147",
+    "name": "召鬼役使",
+    "category": "请召",
+    "keywords": [
+      "役鬼"
+    ],
+    "usage": "",
+    "notes": "辰州符咒大全",
+    "image": "images/0147.jpeg"
   }
 ]
