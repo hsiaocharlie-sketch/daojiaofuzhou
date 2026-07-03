@@ -170,7 +170,7 @@ window.onload = () => {
   switchMode('add');
   setTimeout(() => {
     const catEl = document.getElementById('fCategory');
-    if (mode === 'add' && !catEl.value) catEl.value = '祈禳';
+    if (mode === 'add' && !catEl.value) catEl.value = '请召';
     const notesEl = document.getElementById('fNotes');
     if (mode === 'add' && !notesEl.value) notesEl.value = '辰州符咒大全';
   }, 300);
@@ -201,7 +201,7 @@ function clearForm() {
   document.getElementById('imgFile').value = '';
   document.getElementById('preview').style.display = 'none';
   document.getElementById('fName').value = '';
-  document.getElementById('fCategory').value = '祈禳';
+  document.getElementById('fCategory').value = '请召';
   document.getElementById('fKeywords').value = '';
   document.getElementById('fUsage').value = '';
   document.getElementById('fNotes').value = '辰州符咒大全';
