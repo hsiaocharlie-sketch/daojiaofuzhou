@@ -1238,5 +1238,17 @@
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0102.jpeg"
+  },
+  {
+    "id": "0103",
+    "name": "上香",
+    "category": "请召",
+    "keywords": [
+      "上坛",
+      "法坛"
+    ],
+    "usage": "",
+    "notes": "辰州符咒大全",
+    "image": "images/0103.jpeg"
   }
 ]
