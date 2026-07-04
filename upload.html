@@ -127,7 +127,7 @@
     <input type="text" id="fName" placeholder="例如 镇宅符">
 
     <label>大类(可选)</label>
-    <input type="text" id="fCategory" placeholder="例如 镇宅" value="请召">
+    <input type="text" id="fCategory" placeholder="例如 镇宅" value="医治">
 
     <label>关键词(用逗号分隔)</label>
     <input type="text" id="fKeywords" placeholder="例如 镇宅,安宅,辟邪,平安">
@@ -170,7 +170,7 @@ window.onload = () => {
   switchMode('add');
   setTimeout(() => {
     const catEl = document.getElementById('fCategory');
-    if (mode === 'add' && !catEl.value) catEl.value = '请召';
+    if (mode === 'add' && !catEl.value) catEl.value = '医治';
     const notesEl = document.getElementById('fNotes');
     if (mode === 'add' && !notesEl.value) notesEl.value = '辰州符咒大全';
   }, 300);
@@ -201,7 +201,7 @@ function clearForm() {
   document.getElementById('imgFile').value = '';
   document.getElementById('preview').style.display = 'none';
   document.getElementById('fName').value = '';
-  document.getElementById('fCategory').value = '请召';
+  document.getElementById('fCategory').value = '医治';
   document.getElementById('fKeywords').value = '';
   document.getElementById('fUsage').value = '';
   document.getElementById('fNotes').value = '辰州符咒大全';
@@ -427,13 +427,30 @@ async function submitEntry() {
       dataJson.push({ id: targetId, ...fields, image: imagePath });
     }
 
-    // 更新 data.json
+    // 更新 data.json (带自动重试,应对sha版本冲突)
     showStatus('正在更新数据...', 'info');
-    const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(dataJson, null, 2))));
-    const putBody = { message: commitMsg, content: newContent };
-    if (sha) putBody.sha = sha;
-    const dataPutRes = await ghApi('data.json', { method: 'PUT', body: JSON.stringify(putBody) });
-    if (!dataPutRes.ok) throw new Error('data.json更新失败: ' + (await dataPutRes.text()));
+    let attempts = 0;
+    let dataPutRes;
+    while (attempts < 3) {
+      attempts++;
+      const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(dataJson, null, 2))));
+      const putBody = { message: commitMsg, content: newContent };
+      if (sha) putBody.sha = sha;
+      dataPutRes = await ghApi('data.json', { method: 'PUT', body: JSON.stringify(putBody) });
+      if (dataPutRes.ok) break;
+      if (dataPutRes.status === 409 && attempts < 3) {
+        showStatus(`版本冲突,正在自动重试(${attempts}/3)...`, 'info');
+        await new Promise(r => setTimeout(r, 600));
+        const retryRes = await ghApi('data.json');
+        if (retryRes.status === 200) {
+          const retryBody = await retryRes.json();
+          sha = retryBody.sha;
+        }
+        continue;
+      }
+      throw new Error('data.json更新失败: ' + (await dataPutRes.text()));
+    }
+    if (!dataPutRes.ok) throw new Error('data.json更新失败,已重试3次仍冲突,请再手动点一次提交');
 
     if (mode === 'edit') {
       showStatus(`已保存修改:编号 ${targetId} 「${name}」`, 'ok');
