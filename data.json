@@ -3460,10 +3460,19 @@
   {
     "id": "0314",
     "name": "治咳嗽",
-    "category": "医治",
+    "category": "",
     "keywords": [],
     "usage": "",
     "notes": "符咒图典精华",
     "image": "images/0314_1783268267878.jpeg"
+  },
+  {
+    "id": "0315",
+    "name": "治肾脏糖尿病",
+    "category": "医治",
+    "keywords": [],
+    "usage": "",
+    "notes": "符咒图典精华",
+    "image": "images/0315_1783268331862.jpeg"
   }
 ]
