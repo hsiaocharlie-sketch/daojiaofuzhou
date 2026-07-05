@@ -127,7 +127,7 @@
     <input type="text" id="fName" placeholder="例如 镇宅符">
 
     <label>大类(可选)</label>
-    <input type="text" id="fCategory" placeholder="例如 镇宅" value="祈禳">
+    <input type="text" id="fCategory" placeholder="例如 镇宅" value="医治">
 
     <label>关键词(用逗号分隔)</label>
     <input type="text" id="fKeywords" placeholder="例如 镇宅,安宅,辟邪,平安">
@@ -170,7 +170,7 @@ window.onload = () => {
   switchMode('add');
   setTimeout(() => {
     const catEl = document.getElementById('fCategory');
-    if (mode === 'add' && !catEl.value) catEl.value = '祈禳';
+    if (mode === 'add' && !catEl.value) catEl.value = '医治';
     const notesEl = document.getElementById('fNotes');
     if (mode === 'add' && !notesEl.value) notesEl.value = '辰州符咒大全';
   }, 300);
@@ -201,7 +201,7 @@ function clearForm() {
   document.getElementById('imgFile').value = '';
   document.getElementById('preview').style.display = 'none';
   document.getElementById('fName').value = '';
-  document.getElementById('fCategory').value = '祈禳';
+  document.getElementById('fCategory').value = '医治';
   document.getElementById('fKeywords').value = '';
   document.getElementById('fUsage').value = '';
   document.getElementById('fNotes').value = '辰州符咒大全';
