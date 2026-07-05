@@ -127,7 +127,7 @@
     <input type="text" id="fName" placeholder="例如 镇宅符">
 
     <label>大类(可选)</label>
-    <input type="text" id="fCategory" placeholder="例如 镇宅" value="医治">
+    <input type="text" id="fCategory" placeholder="例如 镇宅" value="祈禳">
 
     <label>关键词(用逗号分隔)</label>
     <input type="text" id="fKeywords" placeholder="例如 镇宅,安宅,辟邪,平安">
@@ -170,7 +170,7 @@ window.onload = () => {
   switchMode('add');
   setTimeout(() => {
     const catEl = document.getElementById('fCategory');
-    if (mode === 'add' && !catEl.value) catEl.value = '医治';
+    if (mode === 'add' && !catEl.value) catEl.value = '祈禳';
     const notesEl = document.getElementById('fNotes');
     if (mode === 'add' && !notesEl.value) notesEl.value = '辰州符咒大全';
   }, 300);
@@ -201,7 +201,7 @@ function clearForm() {
   document.getElementById('imgFile').value = '';
   document.getElementById('preview').style.display = 'none';
   document.getElementById('fName').value = '';
-  document.getElementById('fCategory').value = '医治';
+  document.getElementById('fCategory').value = '祈禳';
   document.getElementById('fKeywords').value = '';
   document.getElementById('fUsage').value = '';
   document.getElementById('fNotes').value = '辰州符咒大全';
@@ -387,18 +387,13 @@ async function submitEntry() {
       if (file) {
         showStatus('正在上传新图片...', 'info');
         const ext = file.name.split('.').pop().toLowerCase();
-        const newImgFilename = `${targetId}.${ext}`;
+        const newImgFilename = `${targetId}_${Date.now()}.${ext}`;
         const newImagePath = `images/${newImgFilename}`;
         const imgBase64 = await fileToBase64(file);
-        // 如果文件名(含后缀)和原来一样,需要带上原文件的sha才能覆盖
-        let imgSha = null;
-        if (newImagePath === editingEntry.image) {
-          const existRes = await ghApi(imagePath);
-          if (existRes.status === 200) imgSha = (await existRes.json()).sha;
-        }
-        const imgPutBody = { message: `update image for ${targetId}`, content: imgBase64 };
-        if (imgSha) imgPutBody.sha = imgSha;
-        const imgPutRes = await ghApi(newImagePath, { method: 'PUT', body: JSON.stringify(imgPutBody) });
+        const imgPutRes = await ghApi(newImagePath, {
+          method: 'PUT',
+          body: JSON.stringify({ message: `update image for ${targetId}`, content: imgBase64 })
+        });
         if (!imgPutRes.ok) throw new Error('图片上传失败: ' + (await imgPutRes.text()));
         imagePath = newImagePath;
       }
@@ -408,11 +403,12 @@ async function submitEntry() {
       if (idx >= 0) dataJson[idx] = updatedEntry;
       else dataJson.push(updatedEntry);
     } else {
-      // 新增模式
+      // 新增模式:显示编号仍从data.json推算,但图片文件名改用时间戳,
+      // 确保绝对不会跟任何已存在的文件(包括之前失败留下的孤儿文件)冲突
       const maxId = dataJson.reduce((m, item) => Math.max(m, parseInt(item.id) || 0), 0);
       targetId = String(maxId + 1).padStart(4, '0');
       const ext = file.name.split('.').pop().toLowerCase();
-      const imgFilename = `${targetId}.${ext}`;
+      const imgFilename = `${targetId}_${Date.now()}.${ext}`;
       imagePath = `images/${imgFilename}`;
 
       showStatus('正在上传图片...', 'info');
