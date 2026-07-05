@@ -2277,7 +2277,9 @@
     "id": "0203",
     "name": "治鼓胀",
     "category": "医治",
-    "keywords": [],
+    "keywords": [
+      "胀气"
+    ],
     "usage": "",
     "notes": "辰州符咒大全",
     "image": "images/0203_1783217076942.jpeg"
