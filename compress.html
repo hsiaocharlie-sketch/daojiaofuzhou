@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>符咒图片压缩</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f4f1ea;
+    margin: 0;
+    padding: 16px;
+    color: #2b2b2b;
+  }
+  h1 { font-size: 20px; margin-bottom: 4px; color: #5c3d2e; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  label { display: block; font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+  input[type=number] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  .hint { font-size: 12px; color: #999; margin-top: 4px; }
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #8c5a3c;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 12px;
+  }
+  button:disabled { background: #ccc; }
+  #stopBtn { background: #a33; display: none; }
+  #log {
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #f8f8f4;
+    font-size: 13px;
+    max-height: 320px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    display: none;
+  }
+  .progressBar {
+    height: 8px;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+    display: none;
+  }
+  .progressFill { height: 100%; background: #8c5a3c; width: 0%; transition: width 0.2s; }
+  .stat { font-size: 13px; color: #666; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h1>符咒图片批量压缩</h1>
+<div class="sub">重新处理仓库里已上传的图片,缩小体积</div>
+
+<div class="card">
+  <label>最长边最大像素(超过会等比缩小)</label>
+  <input type="number" id="maxDim" value="1600">
+
+  <label>JPEG压缩质量(0.1~1,越低体积越小)</label>
+  <input type="number" id="quality" value="0.75" step="0.05" min="0.1" max="1">
+
+  <label>跳过小于此大小的图片(KB,已经够小就不处理)</label>
+  <input type="number" id="skipUnder" value="400">
+  <div class="hint">所有图片处理后都会统一转成 .jpg 格式(体积更小),原图会被替换。这个过程不可逆,建议先确认没问题再大批量跑。</div>
+
+  <label style="display:flex; align-items:center; gap:8px; margin-top:16px;">
+    <input type="checkbox" id="backupOriginal" checked style="width:auto;">
+    压缩前打包下载原图备份到电脑
+  </label>
+  <div class="hint" id="backupHint">图片较多时会自动分成多个zip压缩包依次下载,每处理完一定数量就下载一次(避免占用过多内存)。请留意浏览器是否询问"允许多个文件下载",要选允许。</div>
+
+  <button id="startBtn" onclick="startCompress()">开始批量压缩</button>
+  <button id="stopBtn" onclick="stopCompress()">停止</button>
+
+  <div class="progressBar" id="progressBar"><div class="progressFill" id="progressFill"></div></div>
+  <div class="stat" id="stat"></div>
+  <div id="log"></div>
+</div>
+
+<script>
+function getConfig() {
+  return {
+    user: localStorage.getItem('gh_user') || '',
+    repo: localStorage.getItem('gh_repo') || 'daojiaofuzhou',
+    token: localStorage.getItem('gh_token') || ''
+  };
+}
+async function ghApi(path, options = {}) {
+  const c = getConfig();
+  const res = await fetch(`https://api.github.com/repos/${c.user}/${c.repo}/contents/${path}`, {
+    ...options,
+    headers: {
+      'Authorization': `token ${c.token}`,
+      'Accept': 'application/vnd.github+json',
+      ...(options.headers || {})
+    }
+  });
+  return res;
+}
+function log(msg) {
+  const el = document.getElementById('log');
+  el.style.display = 'block';
+  el.textContent += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function setProgress(done, total) {
+  document.getElementById('progressBar').style.display = 'block';
+  document.getElementById('progressFill').style.width = `${(done/total*100).toFixed(1)}%`;
+  document.getElementById('stat').textContent = `已处理 ${done} / ${total}`;
+}
+
+let stopRequested = false;
+let zip = null;
+let zipFileCount = 0;
+let zipPartNum = 1;
+const BACKUP_BATCH_SIZE = 150;
+
+async function addOriginalToZip(filename, base64content) {
+  if (!document.getElementById('backupOriginal').checked) return;
+  const shortName = filename.split('/').pop();
+  zip.file(shortName, base64content, { base64: true });
+  zipFileCount++;
+  if (zipFileCount >= BACKUP_BATCH_SIZE) {
+    await flushZip();
+  }
+}
+
+async function flushZip() {
+  if (!zip || zipFileCount === 0) return;
+  log(`📦 正在打包第${zipPartNum}批原图备份(${zipFileCount}张),即将开始下载...`);
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `符咒原图备份_第${zipPartNum}批.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  zipPartNum++;
+  zip = new JSZip();
+  zipFileCount = 0;
+}
+
+function stopCompress() {
+  stopRequested = true;
+  log('⏸ 已请求停止,处理完当前这张后会暂停...');
+}
+
+function loadImageFromBase64(base64, mimeGuess) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = `data:${mimeGuess};base64,${base64}`;
+  });
+}
+
+function compressToJpegBase64(img, maxDim, quality) {
+  let w = img.width, h = img.height;
+  if (w > maxDim || h > maxDim) {
+    if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+    else { w = Math.round(w * maxDim / h); h = maxDim; }
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  const dataUrl = canvas.toDataURL('image/jpeg', quality);
+  return dataUrl.split(',')[1];
+}
+
+function guessMime(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  if (ext === 'png') return 'image/png';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'webp') return 'image/webp';
+  return 'image/jpeg';
+}
+
+async function startCompress() {
+  const c = getConfig();
+  if (!c.user || !c.token) {
+    alert('请先到 upload.html 里设置好GitHub用户名/仓库/token,再回来使用这个工具');
+    return;
+  }
+  const maxDim = parseInt(document.getElementById('maxDim').value) || 1600;
+  const quality = parseFloat(document.getElementById('quality').value) || 0.75;
+  const skipUnderBytes = (parseInt(document.getElementById('skipUnder').value) || 0) * 1024;
+
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('stopBtn').style.display = 'block';
+  stopRequested = false;
+  zip = new JSZip();
+  zipFileCount = 0;
+  zipPartNum = 1;
+  document.getElementById('log').textContent = '';
+  log('正在读取 data.json...');
+
+  try {
+    const dataRes = await ghApi('data.json');
+    if (dataRes.status !== 200) throw new Error('无法读取 data.json');
+    let dataBody = await dataRes.json();
+    let dataSha = dataBody.sha;
+    let dataJson = JSON.parse(decodeURIComponent(escape(atob(dataBody.content))));
+
+    log(`共 ${dataJson.length} 条记录,开始逐张检查...`);
+    let done = 0, compressed = 0, skipped = 0, failed = 0;
+
+    for (const entry of dataJson) {
+      if (stopRequested) { log('已停止。'); break; }
+      done++;
+      setProgress(done, dataJson.length);
+      try {
+        const imgRes = await ghApi(entry.image);
+        if (imgRes.status !== 200) { log(`⚠️ ${entry.id} 图片读取失败,跳过`); failed++; continue; }
+        const imgBody = await imgRes.json();
+        const originalSize = imgBody.size || 0;
+        if (originalSize > 0 && originalSize < skipUnderBytes) {
+          skipped++;
+          continue;
+        }
+        const mime = guessMime(entry.image);
+        const img = await loadImageFromBase64(imgBody.content, mime);
+        const newBase64 = compressToJpegBase64(img, maxDim, quality);
+        const newSizeApprox = newBase64.length * 0.75;
+        if (newSizeApprox >= originalSize) {
+          skipped++;
+          continue;
+        }
+
+        const ext = entry.image.split('.').pop().toLowerCase();
+        let targetPath = entry.image;
+        let needDeleteOld = false;
+        if (ext !== 'jpg' && ext !== 'jpeg') {
+          targetPath = entry.image.replace(/\.[^.]+$/, '.jpg');
+          needDeleteOld = true;
+        }
+
+        await addOriginalToZip(entry.image, imgBody.content);
+
+        const putBody = { message: `compress image ${entry.id}`, content: newBase64 };
+        if (targetPath === entry.image) putBody.sha = imgBody.sha;
+        const putRes = await ghApi(targetPath, { method: 'PUT', body: JSON.stringify(putBody) });
+        if (!putRes.ok) { log(`⚠️ ${entry.id} 上传压缩后图片失败`); failed++; continue; }
+
+        if (needDeleteOld) {
+          await ghApi(entry.image, {
+            method: 'DELETE',
+            body: JSON.stringify({ message: `remove original for ${entry.id}`, sha: imgBody.sha })
+          });
+          entry.image = targetPath;
+        }
+        compressed++;
+        log(`✅ ${entry.id} ${entry.name}: ${(originalSize/1024).toFixed(0)}KB → ${(newSizeApprox/1024).toFixed(0)}KB`);
+      } catch (e) {
+        failed++;
+        log(`⚠️ ${entry.id} 出错: ${e.message}`);
+      }
+      await new Promise(r => setTimeout(r, 250));
+    }
+
+    await flushZip();
+    log('正在保存更新后的 data.json...');
+    const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(dataJson, null, 2))));
+    const dataPutRes = await ghApi('data.json', {
+      method: 'PUT',
+      body: JSON.stringify({ message: 'update image paths after compression', content: newContent, sha: dataSha })
+    });
+    if (!dataPutRes.ok) log('⚠️ data.json 保存失败,部分图片路径可能没更新,建议重新跑一次');
+
+    log(`\n完成!压缩 ${compressed} 张,跳过 ${skipped} 张(已经够小),失败 ${failed} 张。`);
+  } catch (e) {
+    log('出错: ' + e.message);
+  } finally {
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>
