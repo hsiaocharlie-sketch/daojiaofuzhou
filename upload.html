@@ -170,7 +170,7 @@ window.onload = () => {
   switchMode('add');
   setTimeout(() => {
     const notesEl = document.getElementById('fNotes');
-    if (mode === 'add' && !notesEl.value) notesEl.value = '符咒图典精华';
+    if (mode === 'add' && !notesEl.value) notesEl.value = '灵验符咒大全';
   }, 300);
 };
 
@@ -202,7 +202,7 @@ function clearForm() {
   document.getElementById('fCategory').value = '';
   document.getElementById('fKeywords').value = '';
   document.getElementById('fUsage').value = '';
-  document.getElementById('fNotes').value = '符咒图典精华';
+  document.getElementById('fNotes').value = '灵验符咒大全';
 }
 
 document.getElementById('fKeywords').addEventListener('input', (e) => {
