@@ -5146,5 +5146,17 @@
     "usage": "",
     "notes": "灵验符咒大全",
     "image": "images/0446_1789176671228.jpeg"
+  },
+  {
+    "id": "0447",
+    "name": "治病符",
+    "category": "祝由",
+    "keywords": [
+      "中部病",
+      "下部病"
+    ],
+    "usage": "",
+    "notes": "灵验符咒大全",
+    "image": "images/0447_1789176736262.jpeg"
   }
 ]
