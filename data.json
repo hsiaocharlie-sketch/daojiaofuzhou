@@ -5873,5 +5873,16 @@
     "usage": "",
     "notes": "符咒妙术秘法",
     "image": "images/0504_1789202377911.jpeg"
+  },
+  {
+    "id": "0505",
+    "name": "病符",
+    "category": "健康",
+    "keywords": [
+      "病符星"
+    ],
+    "usage": "",
+    "notes": "符咒妙术秘法",
+    "image": "images/0505_1789202429165.jpeg"
   }
 ]
