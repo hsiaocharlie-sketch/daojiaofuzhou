@@ -5822,5 +5822,17 @@
     "usage": "",
     "notes": "符咒妙术秘法",
     "image": "images/0500_1789195581059.jpeg"
+  },
+  {
+    "id": "0501",
+    "name": "天空符",
+    "category": "平安",
+    "keywords": [
+      "天空星",
+      "太阳"
+    ],
+    "usage": "",
+    "notes": "符咒妙术秘法",
+    "image": "images/0501_1789195644957.jpeg"
   }
 ]
