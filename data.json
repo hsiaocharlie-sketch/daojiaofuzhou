@@ -6298,5 +6298,17 @@
     "usage": "",
     "notes": "符咒妙术秘法",
     "image": "images/0543_1789269925805.jpeg"
+  },
+  {
+    "id": "0544",
+    "name": "竈群神咒",
+    "category": "咒语",
+    "keywords": [
+      "灶神",
+      "灶君"
+    ],
+    "usage": "",
+    "notes": "符咒妙术秘法",
+    "image": "images/0544_1789270011509.jpeg"
   }
 ]
