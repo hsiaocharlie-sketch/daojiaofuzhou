@@ -6355,5 +6355,16 @@
     "usage": "",
     "notes": "符咒妙术秘法",
     "image": "images/0549_1789270263280.jpeg"
+  },
+  {
+    "id": "0550",
+    "name": "齐天大圣神咒",
+    "category": "咒语",
+    "keywords": [
+      "孙悟空"
+    ],
+    "usage": "",
+    "notes": "符咒妙术秘法",
+    "image": "images/0550_1789270291686.jpeg"
   }
 ]
