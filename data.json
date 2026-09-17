@@ -8760,8 +8760,10 @@
   {
     "id": "0803",
     "name": "辟邪除秽清净符",
-    "category": "镇煞，安宅",
-    "keywords": [],
+    "category": "镇煞",
+    "keywords": [
+      "安宅"
+    ],
     "usage": "",
     "notes": "符箓",
     "image": "images/0803_1789658761864.jpeg"
