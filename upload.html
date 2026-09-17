@@ -136,7 +136,7 @@
     <textarea id="fUsage" placeholder="使用方法、贴挂位置、配合仪轨等"></textarea>
 
     <label>备注(可选)</label>
-    <textarea id="fNotes" placeholder="出处、流派、来源等">道教符咒选讲</textarea>
+    <textarea id="fNotes" placeholder="出处、流派、来源等">符箓</textarea>
 
     <button id="submitBtn" onclick="submitEntry()">提交上传</button>
     <button type="button" id="cancelEditBtn" style="display:none; background:#999; margin-top:8px;" onclick="switchMode('add')">取消编辑</button>
@@ -170,7 +170,7 @@ window.onload = () => {
   switchMode('add');
   setTimeout(() => {
     const notesEl = document.getElementById('fNotes');
-    if (mode === 'add' && !notesEl.value) notesEl.value = '道教符咒选讲';
+    if (mode === 'add' && !notesEl.value) notesEl.value = '符箓';
   }, 300);
 };
 
@@ -202,7 +202,7 @@ function clearForm() {
   document.getElementById('fCategory').value = '';
   document.getElementById('fKeywords').value = '';
   document.getElementById('fUsage').value = '';
-  document.getElementById('fNotes').value = '道教符咒选讲';
+  document.getElementById('fNotes').value = '符箓';
 }
 
 document.getElementById('fKeywords').addEventListener('input', (e) => {
