@@ -9251,8 +9251,10 @@
   {
     "id": "0846",
     "name": "镇宅平安符",
-    "category": "镇邪",
-    "keywords": [],
+    "category": "镇煞",
+    "keywords": [
+      "镇邪"
+    ],
     "usage": "",
     "notes": "符箓",
     "image": "images/0846_1789746147801.jpeg"
